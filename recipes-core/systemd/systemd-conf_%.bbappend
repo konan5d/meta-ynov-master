@@ -1,7 +1,7 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 # add cnfig network resolved package
-PACKAGECONFIG_append = " networkd resolved "
+PACKAGECONFIG_append = " networkd resolved"
 # add depend repository wpa-supplicant
 # PN refers to the Package Name 
 # that is extracted from the recipe file name
