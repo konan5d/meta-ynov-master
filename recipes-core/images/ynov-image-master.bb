@@ -6,5 +6,6 @@ IMAGE_INSTALL_append = " \
  libgpiod-tools \
  spitools \
  linux-firmware-rpidistro-bcm43430 \
+ python3 \
 "
 IMAGE_FEATURES_append = " ssh-server-dropbear "
