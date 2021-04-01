@@ -1,0 +1,91 @@
+From e875d8bea97a220b3a8ceea05e0b7626b6cd5286 Mon Sep 17 00:00:00 2001
+From: Corentin LEGEAY <corentin.legeay@gmail.com>
+Date: Thu, 1 Apr 2021 09:38:08 +0200
+Subject: [PATCH] add lm75a sensor and mcp23008 gpio expander
+
+Signed-off-by: Corentin LEGEAY <corentin.legeay@gmail.com>
+---
+ arch/arm/boot/dts/bcm2710-rpi-3-b.dts | 53 +++++++++++++++++++++++++++
+ 1 file changed, 53 insertions(+)
+
+diff --git a/arch/arm/boot/dts/bcm2710-rpi-3-b.dts b/arch/arm/boot/dts/bcm2710-rpi-3-b.dts
+index ecab394195a4..13a8b1fd0702 100644
+--- a/arch/arm/boot/dts/bcm2710-rpi-3-b.dts
++++ b/arch/arm/boot/dts/bcm2710-rpi-3-b.dts
+@@ -77,6 +77,7 @@ audio_pins: audio_pins {
+ 		brcm,pins = <40 41>;
+ 		brcm,function = <4>;
+ 	};
++
+ };
+ 
+ &mmcnr {
+@@ -152,6 +153,18 @@ &i2c1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&i2c1_pins>;
+ 	clock-frequency = <100000>;
++
++	mcp23008: mcp23008@20{
++		compatible = "microchip,mcp23008";
++		gpio-controller;
++		#gpio-cells = <2>;
++		reg = <0x20>;
++	};
++
++	lm75a: lm75a@4b{
++		compatible = "national,lm75a";
++        reg = <0x4b>;
++	};
+ };
+ 
+ &i2c2 {
+@@ -175,6 +188,46 @@ pwr_led: pwr {
+ 		linux,default-trigger = "input";
+ 		gpios = <&expgpio 7 0>;
+ 	};
++
++	d0 {
++		label = "d0";
++		gpios = <&mcp23008 0 GPIO_ACTIVE_LOW>;
++	};
++	
++	d1 {
++		label = "d1";
++		gpios = <&mcp23008 1 GPIO_ACTIVE_LOW>;
++	};
++
++	d2 {
++		label = "d2";
++		gpios = <&mcp23008 2 GPIO_ACTIVE_LOW>;
++	};
++
++	d3 {
++		label = "d3";
++		gpios = <&mcp23008 3 GPIO_ACTIVE_LOW>;
++	};
++
++	d4 {
++		label = "d4";
++		gpios = <&mcp23008 4 GPIO_ACTIVE_LOW>;
++	};
++
++	d5 {
++		label = "d5";
++		gpios = <&mcp23008 5 GPIO_ACTIVE_LOW>;
++	};
++
++	d6 {
++		label = "d6";
++		gpios = <&mcp23008 6 GPIO_ACTIVE_LOW>;
++	};
++
++	d7 {
++		label = "d7";
++		gpios = <&mcp23008 7 GPIO_ACTIVE_LOW>;
++	};
+ };
+ 
+ &hdmi {
+-- 
+2.25.1
+
