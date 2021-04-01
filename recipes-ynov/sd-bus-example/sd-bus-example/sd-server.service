@@ -1,9 +1,0 @@
-[Unit]
-Description=Sd Server service
-
-[Service]
-Type=simple
-ExecStart=/usr/sbin/sd-server
-
-[Install]
-WantedBy=multi-user.target
