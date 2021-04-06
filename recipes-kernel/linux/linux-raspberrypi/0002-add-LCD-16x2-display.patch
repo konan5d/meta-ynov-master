@@ -1,0 +1,60 @@
+From af55b83f96b40d90ab2bab2439c1cc5aefb2cfc9 Mon Sep 17 00:00:00 2001
+From: Corentin LEGEAY <corentin.legeay@gmail.com>
+Date: Thu, 1 Apr 2021 15:51:07 +0200
+Subject: [PATCH 2/2] add LCD 16x2 display
+
+---
+ arch/arm/boot/dts/bcm2710-rpi-3-b.dts | 25 ++++++++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arm/boot/dts/bcm2710-rpi-3-b.dts b/arch/arm/boot/dts/bcm2710-rpi-3-b.dts
+index 13a8b1fd0702..e956fef96605 100644
+--- a/arch/arm/boot/dts/bcm2710-rpi-3-b.dts
++++ b/arch/arm/boot/dts/bcm2710-rpi-3-b.dts
+@@ -21,6 +21,22 @@ aliases {
+ 		serial1 = &uart0;
+ 		mmc1 = &mmcnr;
+ 	};
++
++	auxdisplay {
++		compatible = "hit,hd44780";
++
++		data-gpios = <&pcf8574 4 GPIO_ACTIVE_HIGH>,
++					<&pcf8574 5 GPIO_ACTIVE_HIGH>,
++					<&pcf8574 6 GPIO_ACTIVE_HIGH>,
++					<&pcf8574 7 GPIO_ACTIVE_HIGH>;
++		rs-gpios = <&pcf8574 0 GPIO_ACTIVE_HIGH>;
++		rw-gpios = <&pcf8574 1 GPIO_ACTIVE_HIGH>;
++		enable-gpios = <&pcf8574 2 GPIO_ACTIVE_HIGH>;
++		backlight-gpios = <&pcf8574 3 GPIO_ACTIVE_LOW>;
++
++		display-height-chars = <2>;
++		display-width-chars = <16>;
++	};
+ };
+ 
+ &gpio {
+@@ -165,6 +181,13 @@ lm75a: lm75a@4b{
+ 		compatible = "national,lm75a";
+         reg = <0x4b>;
+ 	};
++
++	pcf8574: pcf8574@27 {
++        compatible = "nxp,pcf8574";
++        reg = <0x27>;
++        gpio-controller;
++        #gpio-cells = <2>;
++    };
+ };
+ 
+ &i2c2 {
+@@ -253,4 +276,4 @@ __overrides__ {
+ 		pwr_led_activelow = <&pwr_led>,"gpios:8";
+ 		pwr_led_trigger = <&pwr_led>,"linux,default-trigger";
+ 	};
+-};
++};
+\ No newline at end of file
+-- 
+2.25.1
+
