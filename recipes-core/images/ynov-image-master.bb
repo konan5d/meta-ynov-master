@@ -9,5 +9,6 @@ IMAGE_INSTALL_append = " \
  python3 \
  python3-pip \
  nano \
+ python-script \
 "
 IMAGE_FEATURES_append = " ssh-server-dropbear "
