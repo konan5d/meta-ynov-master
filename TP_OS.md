@@ -193,15 +193,15 @@ Pour cela nous avons rajouté une valeur à afficher dans le fichier du capteur 
 
 Blynk est une plate-forme IoT fonctionnant de manière indépendante du matériel, grâce à l'utilisation d'applications mobiles et de clouds privés, permettant de réaliser la gestion des appareils, l'analyse de données et du machine-learning.
 
-Pour installer blynk il suffit d'installer l'application sur le store de notre smartphone :
+Pour installer Blynk, il suffit d'installer l'application sur le store de notre smartphone :
 
 -> IOS : https://apps.apple.com/us/app/blynk-iot-for-arduino-esp32/id808760481
 
 -> Android : https://play.google.com/store/apps/details?id=cc.blynk&hl=en_US
 
-Une fois l'installation terminée lancer l'application. Vous êtes obliger de vous créer un compte via un adresse mail valide qui vous permettra par la suite de récupérer les codes d'accès à vos projets qui sera à inscrire sur les cibles.
+Une fois l'installation terminée, lancer l'application. Vous êtes obligés de vous créer un compte via un adresse mail valide qui vous permettra par la suite de récupérer les codes d'accès à vos projets qui sera à inscrire sur les cibles.
 
-Ensuite créé un nouveau projet en cliquant sur le logo "+". Insérer le nom du projet et dans la catégorie sélection du périphérique choisissez "Généric Board" (Cela nous permettra de tester nos projet aussi bien par l'ordinateur que sur notre raspberry pi). Enfin dans la catégorie type de connection selectioner wifi si cela n'est pas le cas. 
+Ensuite créer un nouveau projet en cliquant sur le logo "+". Insérer le nom du projet et dans la catégorie sélection du périphérique choisissez "Généric Board" (Cela nous permettra de tester nos projet aussi bien par l'ordinateur que sur notre raspberry pi). Enfin dans la catégorie type de connexion selectioner wifi si cela n'est pas le cas. 
 
 Pour terminer il suffit de cliquer sur create. Cela va automatiquement envoyer sur l'address mail associée au compte le code permettant à votre cible de se connecter au serveur ou est stocker votre projet / application. En effet, Blynk utilise un serveur qui joue le rôle d'intermédiaire entre votre intérface sur smartphone et la cible, pour la transaction de commande ou de données.
 
@@ -211,13 +211,13 @@ Pour notre premier projet nous avons commencé par demander au raspberry de nous
 
 **2.1 Notre application**
 
-Nous allons utiliser l'application créer ci-dessus et y insérer un nouveau widget en cliquant tu le logo "+" au sein du projet et sélectionner "Value Display".
+Nous allons utiliser l'application créer ci-dessus et y insérer un nouveau widget en cliquant sur le logo "+" au sein du projet et sélectionner "Value Display".
 
-Ensuite nous allons paramètrer notre widget en cliquant dessus. Dans "Input" nous sélectionons "Vitual" puis "V2" puis "OK". Dans "Reading Rate" nous prennons "1 sec". En résumer nous venons de dire au widget de lire le port virtuel 2 du serveur et de faire cela toute les 1 secondes. Le widget étant un affichage de valeur il sait que son rôle sera de lire les valeurs envoyé sur le port sélectionné puis de les afficher.
+Ensuite nous allons paramètrer notre widget en cliquant dessus. Dans "Input" nous sélectionons "Vitual" puis "V2" puis "OK". Dans "Reading Rate" nous prennons "1 sec". En résumé, nous venons de dire au widget de lire le port virtuel 2 du serveur et de faire cela toutes les 1 secondes. Le widget étant un affichage de valeur, il sait que son rôle sera de lire les valeurs envoyées sur le port sélectionné puis de les afficher.
 
 **2.2 Notre raspberry pi**
 
-Pour que notre cible puisse fonctionner nous allons avoir besoin d'inscrire au sein de notre layer meta-ynov-master/reciep-core/images/ynov-image-master.bb les paquets dont nous allons avoir besoin sur notre cible :
+Pour que notre cible puisse fonctionner, nous allons avoir besoin d'inscrire au sein de notre layer meta-ynov-master/reciep-core/images/ynov-image-master.bb les paquets dont nous allons avoir besoin sur notre cible :
 
     IMAGE_INSTALL_append = " \
     python3 \
@@ -226,7 +226,7 @@ Pour que notre cible puisse fonctionner nous allons avoir besoin d'inscrire au s
 
 Ces paquets vont nous permettre d'obtenir l'utilisation de l'environement python3 ainsi que l'utilisation de pip.
 
-Bien sur nous allons avoir besoin d'initaliser la connection internet grâce aux étapes décrite plus tôt.
+Bien sûr nous allons avoir besoin d'initaliser la connexion internet grâce aux étapes décrite plus tôt.
 
 Une fois notre layers paramètrer il ne reste plus qu'a déployer notre OS sur la carte sd de la raspberry
 
@@ -267,17 +267,17 @@ Enfin il suffit de placer la carte sd sur la cible et de la démarrer
 
 **3.1 Sur l'application**
 
-Il suffit de cliquer sur le bouton "play" l'application attendra la connection de la cible au serveur et de pouvoir ainsi recevoir de la donnée
+Il suffit de cliquer sur le bouton "play" l'application attendra la connexion de la cible au serveur et de pouvoir ainsi recevoir de la donnée
 
 **3.2 Sur la raspberry**
 
 Dans le terminal de la rasberry il va nous falloir installer la library Blink :
 
-    $: sudo pip3 install blynklib
+    $: pip3 install blynklib
 
 Puis de lancer notre programme python :
 
     $: python3 fichier.py
 
-Normalement la console indique que blynk fonctionne et nous devrions voir sur notre application l'affichage de la date et de l'heure !
+Normalement la console indique que Blynk fonctionne et nous devrions voir sur notre application l'affichage de la date et de l'heure !
 
