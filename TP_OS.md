@@ -183,3 +183,101 @@ Pour cela nous avons rajouté une valeur à afficher dans le fichier du capteur 
 ```
 
 ## 4. Application Blynk avec python 3
+
+
+<p align="center">
+  <img width="293" height="112" src="https://static.tildacdn.com/tild3830-6364-4266-a638-356563636132/Blynk_logo_diamond.png">
+</p>
+
+* **1 : Introduction et Installation**
+
+Blynk est une plate-forme IoT fonctionnant de manière indépendante du matériel, grâce à l'utilisation d'applications mobiles et de clouds privés, permettant de réaliser la gestion des appareils, l'analyse de données et du machine-learning.
+
+Pour installer blynk il suffit d'installer l'application sur le store de notre smartphone :
+
+-> IOS : https://apps.apple.com/us/app/blynk-iot-for-arduino-esp32/id808760481
+
+-> Android : https://play.google.com/store/apps/details?id=cc.blynk&hl=en_US
+
+Une fois l'installation terminée lancer l'application. Vous êtes obliger de vous créer un compte via un adresse mail valide qui vous permettra par la suite de récupérer les codes d'accès à vos projets qui sera à inscrire sur les cibles.
+
+Ensuite créé un nouveau projet en cliquant sur le logo "+". Insérer le nom du projet et dans la catégorie sélection du périphérique choisissez "Généric Board" (Cela nous permettra de tester nos projet aussi bien par l'ordinateur que sur notre raspberry pi). Enfin dans la catégorie type de connection selectioner wifi si cela n'est pas le cas. 
+
+Pour terminer il suffit de cliquer sur create. Cela va automatiquement envoyer sur l'address mail associée au compte le code permettant à votre cible de se connecter au serveur ou est stocker votre projet / application. En effet, Blynk utilise un serveur qui joue le rôle d'intermédiaire entre votre intérface sur smartphone et la cible, pour la transaction de commande ou de données.
+
+* **2 : Mise en place de l'application et du programme sur la cible**
+
+Pour notre premier projet nous avons commencé par demander au raspberry de nous envoyer sur l'application l'heure en temps réel. 
+
+**2.1 Notre application**
+
+Nous allons utiliser l'application créer ci-dessus et y insérer un nouveau widget en cliquant tu le logo "+" au sein du projet et sélectionner "Value Display".
+
+Ensuite nous allons paramètrer notre widget en cliquant dessus. Dans "Input" nous sélectionons "Vitual" puis "V2" puis "OK". Dans "Reading Rate" nous prennons "1 sec". En résumer nous venons de dire au widget de lire le port virtuel 2 du serveur et de faire cela toute les 1 secondes. Le widget étant un affichage de valeur il sait que son rôle sera de lire les valeurs envoyé sur le port sélectionné puis de les afficher.
+
+**2.2 Notre raspberry pi**
+
+Pour que notre cible puisse fonctionner nous allons avoir besoin d'inscrire au sein de notre layer meta-ynov-master/reciep-core/images/ynov-image-master.bb les paquets dont nous allons avoir besoin sur notre cible :
+
+    IMAGE_INSTALL_append = " \
+    python3 \
+    python3-pip \
+    "
+
+Ces paquets vont nous permettre d'obtenir l'utilisation de l'environement python3 ainsi que l'utilisation de pip.
+
+Bien sur nous allons avoir besoin d'initaliser la connection internet grâce aux étapes décrite plus tôt.
+
+Une fois notre layers paramètrer il ne reste plus qu'a déployer notre OS sur la carte sd de la raspberry
+
+    $: bitbake ynov-image-master
+    $: sudo umount /dev/sd'sd partitionlabel'*
+    $: sudo bmaptool copy tmp/deploy/images/raspberrypi3/ynov-image-master-raspberrypi3-20210407080936.rootfs.wic.bz2 /dev/sd'your sd partition label'
+
+Ensuite aller sur votre carte sd dans la partition root puis /home/root et inserer dans un ficher.py le code python suivant :
+
+```py
+    #!/usr/bin/env python3 
+    import blynklib
+    from time import sleep
+    from datetime import datetime
+
+    # Initialize Blynk
+    BLYNK_AUTH  =  'Your Token'  #  insérez votre jeton d'authentification ici 
+    blynk  =  blynklib.Blynk ( BLYNK_AUTH )
+
+    currentTime = ""
+
+    # Register Virtual Pin
+    @blynk.handle_event('read V2')  # app send request to target
+    def read_handler(vpin):
+        
+        currentTime = datetime.now()
+        blynk.virtual_write(2, currentTime.strftime("%d/%m/%Y %H:%M:%S"))
+        
+    print("started!")
+
+    while True:
+        blynk.run()
+```
+
+Enfin il suffit de placer la carte sd sur la cible et de la démarrer
+
+* **3. Lancement du projet !**
+
+**3.1 Sur l'application**
+
+Il suffit de cliquer sur le bouton "play" l'application attendra la connection de la cible au serveur et de pouvoir ainsi recevoir de la donnée
+
+**3.2 Sur la raspberry**
+
+Dans le terminal de la rasberry il va nous falloir installer la library Blink :
+
+    $: sudo pip3 install blynklib
+
+Puis de lancer notre programme python :
+
+    $: python3 fichier.py
+
+Normalement la console indique que blynk fonctionne et nous devrions voir sur notre application l'affichage de la date et de l'heure !
+
