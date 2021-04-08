@@ -3,7 +3,7 @@ Description=LCD service
 
 [Service]
 Type=simple
-ExecStart=/usr/sbin/lcd-test.sh
+ExecStart=/usr/sbin/lcd-init.sh
 
 [Install]
 WantedBy=multi-user.target

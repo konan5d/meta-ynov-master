@@ -11,5 +11,6 @@ IMAGE_INSTALL_append = " \
  nano \
  python-script \
  shell-script \
+ lcd-refresh \
 "
 IMAGE_FEATURES_append = " ssh-server-dropbear "

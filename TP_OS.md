@@ -300,6 +300,46 @@ Pour cela nous avons rajouté une valeur à afficher dans le fichier du capteur 
 $: printf "\fCPU: %s degres\nLM75: %s degres" $(($(cat /sys/class/hwmon/hwmon0/temp1_input)/1000)) $(($(cat /sys/class/hwmon/hwmon1/temp1_input)/1000)) > /dev/lcd
 ```
 
+**5: Ajout d'un service au démarrage**
+
+On crée un service qui permet d'afficher au démarrage la température à l'écran, et qui initialise les leds. 
+
+Pour se faire, on crée dans une recette un service "lcd.service":
+
+```service
+[Unit]
+Description=LCD service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/lcd-init.sh
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Puis, on crée un fichier "lcd-refresh.bb", pour préciser à bitbake lors du processus de compilation, que nous voulons ajouter le service, et l'installer dans le répertoire contenant tous les services :
+
+```
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta/COPYING.MIT;md5=3da9cfbcb788c80a0384361b4de20420"
+
+SRC_URI = " \
+ file://lcd.service \
+"
+
+DEPENDS = " systemd "
+inherit systemd
+
+do_install_append(){
+ install -d ${D}${systemd_system_unitdir}/
+ install -m 0644 ${WORKDIR}/lcd.service ${D}${systemd_system_unitdir}/
+}
+
+SYSTEMD_SERVICE_${PN} = "lcd.service"
+SYSTEMD_AUTO_ENABLE = "enable"
+```
+
 ## 4. Application Blynk avec python 3
 
 
