@@ -37,7 +37,6 @@ Il faut tout d'abord créer une nouvelle recette : "recipe-connectivity". Dans c
 ```conf
   network={  
     ssid="Bbox-14CE719E"  
-    #psk="15A69EE4C44F39662F5577ADA9A141"  
     psk=893fc8270409d30a2575c0189412a79aaef931fe8672 [...]  
   }  
 ```
