@@ -62,14 +62,44 @@ Tout d'abord, on vérifie que la configuration a bien été chargée :
 ```
   $: ifconfig
 
-  => 
+eth0      Link encap:Ethernet  HWaddr B8:27:EB:7F:D0:D7  
+          UP BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:17 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:17 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:3212 (3.1 KiB)  TX bytes:3212 (3.1 KiB)
+
+wlan0     Link encap:Ethernet  HWaddr B8:27:EB:2A:85:82  
+          inet addr:192.168.1.19  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: 2001:861:4482:6890:ba27:ebff:fe2a:8582/64 Scope:Global
+          inet6 addr: fe80::ba27:ebff:fe2a:8582/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:100 errors:0 dropped:71 overruns:0 frame:0
+          TX packets:46 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:8541 (8.3 KiB)  TX bytes:7186 (7.0 KiB)
 ```
 Puis, on vérifie que notre cible a bien accès à internet. On peut par exemple envoyer un ping à www.google.fr :
 
 ```
   $: ping www.google.fr
 
-  => 
+PING www.google.com (216.58.215.36): 56 data bytes
+64 bytes from 216.58.215.36: seq=0 ttl=115 time=13.239 ms
+64 bytes from 216.58.215.36: seq=1 ttl=115 time=14.310 ms
+64 bytes from 216.58.215.36: seq=2 ttl=115 time=12.559 ms
+64 bytes from 216.58.215.36: seq=3 ttl=115 time=14.597 ms
+64 bytes from 216.58.215.36: seq=4 ttl=115 time=21.783 ms
+64 bytes from 216.58.215.36: seq=5 ttl=115 time=13.238 ms
 ```
 
 Notre cible est désormais connecté au réseau local, mais aussi à internet.
@@ -218,7 +248,7 @@ L'intégration de l'écran nécessite plusieurs étapes pour que nous puissions 
 
 **1 : Recherche de l'adresse i2c du GPIO expander**
 
-D'après la datasheet ....   
+D'après la datasheet en connectant les trois bits d'adresse A0, A1 et A2 à VIN ou HIGH, on obtient différentes combinaisons d'adresses. Dans notre cas, A0, A1 et A2 valent 1. Nous avons donc l'adresse 0x27 pour notre GPIO expander.
 
 **2: Intégration d'un noeud i2c dans le device tree pour l'utiliser**  
 
