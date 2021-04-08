@@ -30,7 +30,7 @@ Pour personnaliser notre image comme nous le souhaitons, nous avons créé une l
 
 # 1. Initialisation et connexion automatique à un réseau local sans fil :
 
-Il faut tout d'abord créer une nouvelle recette : "recipe-connectivity". Dans cette recette, nous ajoutons la configuration de notre réseau sans fil(SSID + clé). 
+Il faut tout d'abord créer une nouvelle recette (fichier bb), contenue dans le fichier : "recipe-connectivity". Dans cette recette, nous ajoutons la configuration de notre réseau sans fil(SSID + clé). 
 
 **wpa_supplicant-nl80211-wlan0.conf**  
 
