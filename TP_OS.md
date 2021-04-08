@@ -267,18 +267,21 @@ D'après la datasheet en connectant les trois bits d'adresse A0, A1 et A2 à VIN
 Il faut initialiser l'état par défaut des broches de l'écran. Pour trouver la configuration, nous avons utilisé la librairie Arduino "LiquidCrystal I2C".
 
 ```dts
-auxdisplay {  
-            compatible = "hit,hd44780";  
-            data-gpios = <& hc595 0 GPIO_ACTIVE_HIGH>,  
-                            <& hc595 4 GPIO_ACTIVE_HIGH>,  
-                            <& hc595 5 GPIO_ACTIVE_HIGH>,  
-                            <& hc595 6 GPIO_ACTIVE_HIGH>;  
-            enable-gpios = <& hc595 7 GPIO_ACTIVE_HIGH>;  
-            rs-gpios = <& hc595 5 GPIO_ACTIVE_HIGH>;  
+auxdisplay {
+		compatible = "hit,hd44780";
 
-            display-height-chars = <2>;  
-            display-width-chars = <16>;  
-        };  
+		data-gpios = <&pcf8574 4 GPIO_ACTIVE_HIGH>,
+				<&pcf8574 5 GPIO_ACTIVE_HIGH>,
+				<&pcf8574 6 GPIO_ACTIVE_HIGH>,
+				<&pcf8574 7 GPIO_ACTIVE_HIGH>;
+		rs-gpios = <&pcf8574 0 GPIO_ACTIVE_HIGH>;
+		rw-gpios = <&pcf8574 1 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&pcf8574 2 GPIO_ACTIVE_HIGH>;
+		backlight-gpios = <&pcf8574 3 GPIO_ACTIVE_LOW>;
+
+		display-height-chars = <2>;
+		display-width-chars = <16>;
+	};
 ```
 
 Ensuite dans le menu de configuration du kernel Raspberry, nous avons activé les pilotes suivants :
