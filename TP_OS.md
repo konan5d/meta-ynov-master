@@ -21,7 +21,7 @@ Matériels :
 Le but de ce TP est de mettre en oeuvre :
 * La personnalisation et la compilation d'une image pour une cible spécifique avec Yocto
 * La création d'une layer
-* La création et la ersonnalisation des recettes, ou la personnalisation de recettes existantes
+* La création et la personnalisation des recettes, ou la personnalisation de recettes existantes
 * L'intégration de plusieurs composants électroniques
 * La configuration d'un service pour se connecter automatiquement au wifi
 * La communication avec une application externe, grâce à un programme Python (avec les libraires nécessaires)
@@ -30,7 +30,7 @@ Pour personnaliser notre image comme nous le souhaitons, nous avons créé une l
 
 # 1. Initialisation et connexion automatique à un réseau local sans fil :
 
-Il faut tout d'abord créer une nouvelle recette : "recipe-connectivity". Dans cette recette ,nous ajourtons la configuration de notre réseau sans fil(SSID + clé). 
+Il faut tout d'abord créer une nouvelle recette : "recipe-connectivity". Dans cette recette, nous ajoutons la configuration de notre réseau sans fil(SSID + clé). 
 
 **wpa_supplicant-nl80211-wlan0.conf**  
 
@@ -55,42 +55,189 @@ SYSTEMD_SERVICE_${PN}_append = " wpa_supplicant-nl80211@wlan0.service  "
 
 Enfin, la fonction "**do_install_append ()**" permet d'installer toute la configuration lors du processus de compilation de l'image.
 
-Après compilation de notre image, il faut tester que notre nouvelle configuration a bien été prise en compte et que la connexion s'est bien effectué, avec notre réseau local.
+Après compilation de notre image, il faut tester que notre nouvelle configuration a bien été prise en compte et que la connexion s'est bien effectuée, avec notre réseau local.
 
-Tout d'abord, on vérifie que la configuration a bien été chargée :
+Tout d'abord, on vérifie que la configuration ait bien été chargée :
 
 ```
   $: ifconfig
 
-  => 
+eth0      Link encap:Ethernet  HWaddr B8:27:EB:7F:D0:D7  
+          UP BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:17 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:17 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:3212 (3.1 KiB)  TX bytes:3212 (3.1 KiB)
+
+wlan0     Link encap:Ethernet  HWaddr B8:27:EB:2A:85:82  
+          inet addr:192.168.1.19  Bcast:192.168.1.255  Mask:255.255.255.0
+          inet6 addr: 2001:861:4482:6890:ba27:ebff:fe2a:8582/64 Scope:Global
+          inet6 addr: fe80::ba27:ebff:fe2a:8582/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:100 errors:0 dropped:71 overruns:0 frame:0
+          TX packets:46 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:8541 (8.3 KiB)  TX bytes:7186 (7.0 KiB)
 ```
 Puis, on vérifie que notre cible a bien accès à internet. On peut par exemple envoyer un ping à www.google.fr :
 
 ```
   $: ping www.google.fr
 
-  => 
+PING www.google.com (216.58.215.36): 56 data bytes
+64 bytes from 216.58.215.36: seq=0 ttl=115 time=13.239 ms
+64 bytes from 216.58.215.36: seq=1 ttl=115 time=14.310 ms
+64 bytes from 216.58.215.36: seq=2 ttl=115 time=12.559 ms
+64 bytes from 216.58.215.36: seq=3 ttl=115 time=14.597 ms
+64 bytes from 216.58.215.36: seq=4 ttl=115 time=21.783 ms
+64 bytes from 216.58.215.36: seq=5 ttl=115 time=13.238 ms
 ```
 
-Notre cible est désormais connecté au réseau local, mais aussi à internet.
+Notre cible est désormais connectée au réseau local, mais aussi à internet.
 
 <br>
 
-## 2. Intégration d'un capteur de température et de LEDS :
+# 2. Intégration d'un capteur de température et de LEDS :
 
-Tout d'abord Le capteur de température (LM75A) et les leds sont intégrés à la carte d'extension "**Expansion Board WaRP7**.
+Tout d'abord le capteur de température (LM75A) et les leds sont intégrés à la carte d'extension "**Expansion Board WaRP7**.
 
 Pour communiquer avec notre cible (la RPi 3 B), il faut relier cette carte via le bus i2c1.
 
+Dans un premier temps, afin de ne pas recompiler notre image à chaque fois, nous travaillerons avec les sources du kernel "raspberry".
+
+Néanmoins, il faut flasher une première fois la carte SD de notre cible avec une image (compilé avec Yocto). 
+
+Le but est de :
+
+* 1: Contrôler les leds sur la carte d'extension, par l'intermédiaire du GPIO expander mcp23008
+* 2: Lire la température du capteur LM75A
+
+**1 : Controle des leds**
+
+Le GPIO expander doit être utilisé via le bus i2c. On utilisera le bus i2c1 sur notre cible.
+
+Dans le device tree (bcm2710 dans notre cas), il faut ajouter un nouveau noeud, pour que notre composant puisse être détecté lors de la phase 
+d'initialisation du kernel.
+
+```dts
+mcp23008: mcp23008@20{
+		compatible = "microchip,mcp23008";
+		gpio-controller;
+		#gpio-cells = <2>;
+		reg = <0x20>;
+};
+```
+Pour se faire, si le driver du composant est déjà implémenté dans le kernel, on peut utiliser la documentation fournie. 
+
+Dans notre cas, on utilisera la documentation suivant : 
+
+```
+  $: linux/Documentation/devicetree/bindings/gpio/gpio-pcf857x.txt
+```
+Cette documentation décrit les informations requises dans le device tree. 
+
+Puis, il faut ajouter, toujours dans le device tree, des noeuds pour que nous puissions contrôler nos leds, dans notre environnement.
+
+Par exemple, pour la led 0, on ajoutera les lignes suivantes :
+
+```
+d0 {
+		label = "d0";
+		gpios = <&mcp23008 0 GPIO_ACTIVE_LOW>;
+	};
+```
+
+Le noeud **d0**, aura comme label "d0", et il fera appel à la broche "0" du gpio expander, et "GPIO_ACTIVE_LOW" fixera l'état par défaut de notre led.
+
+Enfin, il faut compiler le menuconfig du kernel pour activer nos différents modules. 
+
+Après compilation du device tree et du menu de configuration, et dès que cet ajout est fonctionnel, on peut, grâce à GIT, créer un patch pour ajouter nos modifcations dans le device tree de notre image yocto (après ajouter nos modifications dans git).
+
+Pour se faire, on exécute la commande suivante : 
+```
+  $: git format-patch -1
+```
+
+Le patch généré doit être ajouté dans la recette "meta-ynov-master/recipes-kernel/linux/linux-raspberrypi"
+
+Vu que nous apportons des modifications à une recette déjà existante dans une autre layer, on apportera les modifcations dans le "linux-raspberrypi_%.bbappend".
+
+Lors du processus de construction de notre image, il faut préciser à bitbake qu'il faut récupérer les modifications apportées dans notre patch. On ajoutera les patchs dans la 
+variable "SRC_URI_append"
+
+```
+  SRC_URI_append = " \
+  file://0001-add-lm75a-sensor-and-mcp23008-gpio-expander.patch \
+  file://0002-add-LCD-16x2-display.patch \
+  file://fragment.cfg \
+  "
+```
+
+Le fichier "fragment.cfg" permet d'ajouter les modifications apportées dans le menu de configuration du kernel.
+
+Sur notre cible (après compilation et écriture de l'image sur la carte SD), on vérifie que notre composant est bien détecté :
+```
+  $: i2cdetect -y 1
+
+  => 0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+  00:          -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  20: UU -- -- -- -- -- -- UU -- -- -- -- -- -- -- -- 
+  30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  40: -- -- -- -- -- -- -- -- 48 -- -- UU -- -- -- -- 
+  50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 6f 
+  70: -- -- -- -- -- -- -- --     
+```
+
+Pour contrôler nos leds, il suffit d'aller dans le dossier /sys/class/leds/. On peut voir qu'il y a toutes les leds ajoutées dans le device tree.
+
+Pour allumer une led, on utilise la commande suivante (par exemple d0) :
+
+```
+ $: echo 255 > /sys/class/leds/d0/brightness 
+```
+Et la lumière fut !
+
+**2 : Lire la température du capteur LM75A**
+
+Pour ajouter notre capteur de température, on utilise la même procédure que le gpio expander, en adaptant la configuration.
+
+On ajoute le noeud dans le device tree du kernel :
+
+```
+	lm75a: lm75a@4b{
+		compatible = "national,lm75a";
+        reg = <0x4b>;
+	};
+```
+
+On crée un patch, et on l'ajoute à la recette du kernel dans notre image.
+
+Sur note cible, on peut lire la température en utilisant la commande suivante :
+
+```
+  $: cat /sys/class/hwmon/hwmon1/temp1_input 
+
+  => 22000
+```
+
 <br>
    
-## 3. Intégration d'un écran LCD 16x2
+# 3. Intégration d'un écran LCD 16x2
 
 Pour faciliter la communication avec cet écran, il dispose d'un GPIO expander, utilisable via l'i2c.
 
-Dans un premier temps, afin de ne pas recompiler notre image à chaque fois, nous avons uniquement recompiler le device tree, dans le kernel "raspberry".
-
-Néanmoins, il faut flasher une première fois la carte SD de notre cible avec une image (compilé avec Yocto). 
+Dans un premier temps, comme dans la partie **2**, nous travaillerons avec les sources du kernel "raspberry".
 
 L'intégration de l'écran nécessite plusieurs étapes pour que nous puissions l'utiliser sur notre cible :
 
@@ -101,7 +248,7 @@ L'intégration de l'écran nécessite plusieurs étapes pour que nous puissions 
 
 **1 : Recherche de l'adresse i2c du GPIO expander**
 
-D'après la datasheet ....   
+D'après la datasheet en connectant les trois bits d'adresse A0, A1 et A2 à VIN ou HIGH, on obtient différentes combinaisons d'adresses. Dans notre cas, A0, A1 et A2 valent 1. Nous avons donc l'adresse 0x27 pour notre GPIO expander.
 
 **2: Intégration d'un noeud i2c dans le device tree pour l'utiliser**  
 
@@ -153,7 +300,15 @@ Tout d'abord, on vérifie que notre composant est bien détecté :
 ```
   $: i2cdetect -y 1
 
-  =>
+  => 0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+  00:          -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  20: UU -- -- -- -- -- -- UU -- -- -- -- -- -- -- -- 
+  30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  40: -- -- -- -- -- -- -- -- 48 -- -- UU -- -- -- -- 
+  50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+  60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 6f 
+  70: -- -- -- -- -- -- -- --   
 ```
 
 Cette commande nous montre bien que le GPIO Expader est bien détecté, et il est prêt à ếtre utilisé (présence de "**UU**" à l'adresse 0x27).
@@ -172,17 +327,18 @@ Cette commande permet d'écrire une chaine de caractère dans "lcd". Elle sera p
 Nous voulons afficher la température CPU à l'écran. Il faut lire la température dans **syst/class/xxx**, et concaténer le contenu dans la sortie standard. 
 
 ```
- $: printf "CPU : %s degres" $(cat(syst/class/xxx)) > dev/lcd
+ $: printf "CPU : %s degres" $(($(cat /sys/class/hwmon/hwmon0/temp1_input)/1000)) > /dev/lcd
 ```
 
-Ensuite nous avons branché l'écran à la carte Ynov pour récupérer la température du capteur LM75A.
+Ensuite nous avons branché l'écran à la carte au bus i2c1 pour récupérer la température du capteur LM75A.
+
 Pour cela nous avons rajouté une valeur à afficher dans le fichier du capteur de température :
 
 ```
-  $: printf "CPU : %s degres \n LM : %s degres" $((cat(syst/class/xxx))(syst/class/xxx) >dev/lcd
+$: printf "\fCPU: %s degres\nLM75: %s degres" $(($(cat /sys/class/hwmon/hwmon0/temp1_input)/1000)) $(($(cat /sys/class/hwmon/hwmon1/temp1_input)/1000)) > /dev/lcd
 ```
 
-## 4. Application Blynk avec python 3
+# 4. Application Blynk avec python 3
 
 
 <p align="center">
@@ -279,7 +435,7 @@ Puis de lancer notre programme python :
 ```
     $: python3 fichier.py
 ```
-Normalement la console indique que Blynk fonctionne et nous devrions voir sur notre application l'affichage de la date et de l'heure !
+La console indique que Blynk fonctionne et nous pouvons voir sur notre application l'affichage de la date et de l'heure !
 
 **4. Nouvelle approche et intégration native au sein de l'image**
 
