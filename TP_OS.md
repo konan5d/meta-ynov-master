@@ -106,7 +106,7 @@ Notre cible est désormais connectée au réseau local, mais aussi à internet.
 
 <br>
 
-## 2. Intégration d'un capteur de température et de LEDS :
+# 2. Intégration d'un capteur de température et de LEDS :
 
 Tout d'abord le capteur de température (LM75A) et les leds sont intégrés à la carte d'extension "**Expansion Board WaRP7**.
 
@@ -233,7 +233,7 @@ Sur note cible, on peut lire la température en utilisant la commande suivante :
 
 <br>
    
-## 3. Intégration d'un écran LCD 16x2
+# 3. Intégration d'un écran LCD 16x2
 
 Pour faciliter la communication avec cet écran, il dispose d'un GPIO expander, utilisable via l'i2c.
 
@@ -338,7 +338,7 @@ Pour cela nous avons rajouté une valeur à afficher dans le fichier du capteur 
 $: printf "\fCPU: %s degres\nLM75: %s degres" $(($(cat /sys/class/hwmon/hwmon0/temp1_input)/1000)) $(($(cat /sys/class/hwmon/hwmon1/temp1_input)/1000)) > /dev/lcd
 ```
 
-## 4. Application Blynk avec python 3
+# 4. Application Blynk avec python 3
 
 
 <p align="center">
