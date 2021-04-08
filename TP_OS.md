@@ -336,22 +336,22 @@ Ensuite nous allons paramètrer notre widget en cliquant dessus. Dans "Input" no
 **2.2 Notre raspberry pi**
 
 Pour que notre cible puisse fonctionner, nous allons avoir besoin d'inscrire au sein de notre layer meta-ynov-master/reciep-core/images/ynov-image-master.bb les paquets dont nous allons avoir besoin sur notre cible :
-
+```
     IMAGE_INSTALL_append = " \
     python3 \
     python3-pip \
     "
-
+```
 Ces paquets vont nous permettre d'obtenir l'utilisation de l'environement python3 ainsi que l'utilisation de pip.
 
 Bien sûr nous allons avoir besoin d'initaliser la connexion internet grâce aux étapes décrite plus tôt.
 
 Une fois notre layers paramètrer il ne reste plus qu'a déployer notre OS sur la carte sd de la raspberry
-
+```
     $: bitbake ynov-image-master
     $: sudo umount /dev/sd'sd partitionlabel'*
     $: sudo bmaptool copy tmp/deploy/images/raspberrypi3/ynov-image-master-raspberrypi3-20210407080936.rootfs.wic.bz2 /dev/sd'your sd partition label'
-
+```
 Ensuite aller sur votre carte sd dans la partition root puis /home/root et inserer dans un ficher.py le code python suivant :
 
 ```py
@@ -390,12 +390,137 @@ Il suffit de cliquer sur le bouton "play" l'application attendra la connexion de
 **3.2 Sur la raspberry**
 
 Dans le terminal de la rasberry il va nous falloir installer la library Blink :
-
+```
     $: pip3 install blynklib
-
+```
 Puis de lancer notre programme python :
-
+```
     $: python3 fichier.py
-
+```
 Normalement la console indique que Blynk fonctionne et nous devrions voir sur notre application l'affichage de la date et de l'heure !
 
+**4. Nouvelle approche et intégration native au sein de l'image**
+
+L'un des problèmes majeurs qui s'offre à nous actuellement est que nous devons copier nos fichiers python et shell sur la carte SD après que nous l'ayons flashé. 
+
+Ainsi nous avons pensé à créer deux recettes qui contiendrons les fichiers python et shell. Ainsi lors de la création de l'image nos fichiers seront présents à la racine de notre OS.
+
+**4.1 Recipes python**
+
+Notre recette sera arborré de la manière suivante :
+```py
+    recipes-python  # dossier de la recette
+    |
+    python-script   # dossier principale
+    |_ files        # dossier contenant les programmes python
+    |   |_hour.py   
+    |   |_main.py
+    |_python-script_1.0.bb  # fichier .bb paramettrant la recette
+```
+
+Notre recette étant personalisée nous somme obliger d'utiliser le .bb et d'inscrire une license MIT au sein du fichier. Contrairement au recette existante au sein de yocto où l'extension du fichier sera .bbappend
+
+Le contenu du python-script_1.0.bb :
+
+```py
+DESCRIPTION = "Simple Python application"
+SECTION = "examples"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
+
+# On inscrits les fichiers python à prendre en compte 
+SRC_URI = "file://hour.py \
+           file://main.py"
+
+
+do_install () {
+    install -d ${D}${bindir}
+    # On lui demande de les installer au sein de l'image
+    install -m 0755 ${WORKDIR}/hour.py ${D}${bindir}
+    install -m 0755 ${WORKDIR}/main.py ${D}${bindir}
+}
+
+# On les places au sein du dossier bin de notre OS
+FILES_${PN} += "${bindir}/hour.py"
+FILES_${PN} += "${bindir}/main.py"
+# On lui indique que ces fichier vont dépendre de l'environnement python 3
+RDEPENDS_python-script-1.0 += "python3"
+```
+
+Enfin il ne recette plus qu'à ajouter dans notre recipes-core->images->ynov-image-master.bb l'indication vers la nouvelle recette à prendre en compte :
+
+```py
+IMAGE_INSTALL_append = "python-script"
+```
+
+**4.2 Recipes-shell**
+
+Notre nouvelle recette shell va être basé sur le même principe que notre recette python sauf que nous allons prendre en compte les fichiers .sh
+
+Notre recette sera arborré de la manière suivante :
+```py
+    recipes-shell  # dossier de la recette
+    |
+    shell-script   # dossier principale
+    |_ files        # dossier contenant les programmes shell
+    |   |_start.sh   
+    |   |_start2.sh
+    |_shell-script_1.0.bb  # fichier .bb paramettrant la recette
+```
+
+Notre recette étant personalisée nous somme obliger d'utiliser le .bb et d'inscrire une license MIT au sein du fichier. Contrairement au recette existante au sein de yocto où l'extension du fichier sera .bbappend
+
+Le contenu du shell-script_1.0.bb :
+
+```py
+DESCRIPTION = "Simple Shell application"
+SECTION = "examples"
+LICENSE = "MIT"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
+
+# on inscrit les fichiers bash à prendre en compte
+SRC_URI = "file://start.sh \
+           file://start2.sh"
+
+
+do_install () {
+    install -d ${D}${sbindir}
+    # On lui dit de les installer dans l'image
+    install -m 0755 ${WORKDIR}/start.sh ${D}${sbindir}
+    install -m 0755 ${WORKDIR}/start2.sh ${D}${sbindir}
+}
+
+# On lui dit de les placer dans le dossier bin
+FILES_${PN} += "${bindir}/start.sh"
+FILES_${PN} += "${bindir}/start2.sh"
+```
+
+Enfin il ne recette plus qu'à ajouter dans notre recipes-core->images->ynov-image-master.bb l'indication vers la nouvelle recette à prendre en compte :
+
+```py
+IMAGE_INSTALL_append = "shell-script"
+```
+
+
+**4.3 Lancement de notre amélioration**
+
+Pour automatiser le lancement de notre programme hour.py fonctionnant avec Blynk nous allons utiliser le fichier script.sh pour réaliser le téléchargement automatique de la librairie si elle n'est pas présente, ainsi que le lancement du programme.
+
+start.sh :
+
+```sh
+ #!/bin/sh
+
+ # Installation de blynklib
+ pip3 install blynklib
+ #Lancement du programme
+ hour.py
+```
+
+Il ne nous reste plus qu'à flasher notre carte SD et de démarrer la raspberry pi. Une fois l'OS lancer il ne nous reste plus qu'a tapper :
+ 
+ ```sh
+  $: start.sh
+ ```
+
+Good Job !
